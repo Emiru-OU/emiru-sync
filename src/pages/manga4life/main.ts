@@ -5,6 +5,7 @@ export const manga4life: pageInterface = {
   domain: 'https://manga4life.com',
   languages: ['English'],
   type: 'manga',
+  database: 'MangaSee',
   isSyncPage(url) {
     if (url.split('/')[3] === 'read-online') {
       return true;
@@ -82,14 +83,46 @@ export const manga4life: pageInterface = {
             return manga4life.sync.getTitle(page.url) && manga4life.sync.getEpisode(page.url);
           }
           if (manga4life.isOverviewPage!(page.url)) {
-            return manga4life.overview!.getTitle(page.url);
+            return (
+              manga4life.overview!.getTitle(page.url) &&
+              !j.$('a[href$="{{vm.ChapterURLEncode(vm.Chapters[vm.Chapters.length-1].Chapter)}}"]').length
+            );
           }
           return false;
         },
         function() {
-          page.handlePage();
+          if (manga4life.isOverviewPage!(page.url)) {
+            page.handlePage();
+          }
+          if (manga4life.isSyncPage(page.url)) {
+            changeDetectBlank(
+              () => {
+                page.handlePage();
+              },
+              () => {
+                return j
+                  .$('div.Column.col-lg-2.col-6 button.btn.btn-sm.btn-outline-secondary.ng-binding')
+                  .first()
+                  .text()
+                  .trim();
+              },
+            );
+          }
         },
       );
     });
+
+    function changeDetectBlank(callback, func) {
+      let currentPage = '';
+      const intervalId = setInterval(function() {
+        const temp = func();
+        if (typeof temp !== 'undefined' && currentPage !== temp) {
+          currentPage = func();
+          callback();
+        }
+      }, 500);
+
+      return Number(intervalId);
+    }
   },
 };

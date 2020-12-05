@@ -4,6 +4,7 @@ export const settingsObj = {
     autoTrackingModemanga: 'instant',
     enablePages: {},
     forceEn: false,
+    rpc: true,
     presenceHidePage: false,
     userscriptModeButton: false,
     strictCookies: false,
@@ -32,21 +33,21 @@ export const settingsObj = {
     miniMalHeight: '90%',
     malThumbnail: 100,
     friendScore: true,
+    loadPTWForProgress: false,
 
     SiteSearch: true,
     '9anime': true,
     Crunchyroll: true,
     Gogoanime: true,
-    Animeheaven: true,
     Twistmoe: true,
     Anime4you: true,
     Mangadex: true,
     MangaNelo: true,
-    Netflix: true,
-    Proxeranime: true,
-    Proxermanga: true,
     Aniwatch: true,
     AnimeSimple: true,
+    animepahe: true,
+    MangaFox: true,
+    MangaSee: true,
 
     autofull: false,
     autoresume: false,
@@ -66,6 +67,8 @@ export const settingsObj = {
     updateCheckNotifications: true,
 
     bookMarksList: false,
+
+    customDomains: [],
 
     anilistToken: '',
     anilistOptions: {

@@ -3,9 +3,16 @@ import { checkInit, checkContinue } from './background/backgroundIframe';
 import { listSyncInit } from './background/listSync';
 import { initSyncTags } from './background/syncTags';
 import { initProgressScheduler } from './background/releaseProgress';
+import { initCustomDomain } from './background/customDomain';
 
 try {
   initSyncTags();
+} catch (e) {
+  con.error(e);
+}
+
+try {
+  initCustomDomain();
 } catch (e) {
   con.error(e);
 }
@@ -165,6 +172,15 @@ function messageHandler(message: sendMessageI, sender, sendResponse) {
         }
       });
       return true;
+    }
+    case 'emitter': {
+      chrome.runtime.sendMessage(message);
+      chrome.tabs.query({}, tabs => {
+        tabs.forEach(tab => {
+          // @ts-ignore
+          chrome.tabs.sendMessage(tab.id, message);
+        });
+      });
     }
     default:
   }

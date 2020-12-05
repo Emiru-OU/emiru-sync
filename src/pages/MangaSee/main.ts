@@ -5,8 +5,15 @@ export const MangaSee: pageInterface = {
   domain: 'https://mangasee123.com',
   languages: ['English'],
   type: 'manga',
+  database: 'MangaSee',
   isSyncPage(url) {
     if (url.split('/')[3] === 'read-online') {
+      return true;
+    }
+    return false;
+  },
+  isOverviewPage(url) {
+    if (url.split('/')[3] === 'manga') {
       return true;
     }
     return false;
@@ -73,10 +80,54 @@ export const MangaSee: pageInterface = {
   },
   init(page) {
     api.storage.addStyle(require('!to-string-loader!css-loader!less-loader!./style.less').toString());
+
     j.$(document).ready(function() {
-      if (page.url.split('/')[3] === 'read-online' || page.url.split('/')[3] === 'manga') {
-        page.handlePage();
-      }
+      utils.waitUntilTrue(
+        function() {
+          if (MangaSee.isSyncPage(page.url)) {
+            return MangaSee.sync.getTitle(page.url) && MangaSee.sync.getEpisode(page.url);
+          }
+          if (MangaSee.isOverviewPage!(page.url)) {
+            return (
+              MangaSee.overview!.getTitle(page.url) &&
+              !j.$('a[href$="{{vm.ChapterURLEncode(vm.Chapters[vm.Chapters.length-1].Chapter)}}"]').length
+            );
+          }
+          return false;
+        },
+        function() {
+          if (MangaSee.isOverviewPage!(page.url)) {
+            page.handlePage();
+          }
+          if (MangaSee.isSyncPage(page.url)) {
+            changeDetectBlank(
+              () => {
+                page.handlePage();
+              },
+              () => {
+                return j
+                  .$('div.Column.col-lg-2.col-6 button.btn.btn-sm.btn-outline-secondary.ng-binding')
+                  .first()
+                  .text()
+                  .trim();
+              },
+            );
+          }
+        },
+      );
     });
+
+    function changeDetectBlank(callback, func) {
+      let currentPage = '';
+      const intervalId = setInterval(function() {
+        const temp = func();
+        if (typeof temp !== 'undefined' && currentPage !== temp) {
+          currentPage = func();
+          callback();
+        }
+      }, 500);
+
+      return Number(intervalId);
+    }
   },
 };

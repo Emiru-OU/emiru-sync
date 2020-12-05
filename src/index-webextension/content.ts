@@ -1,14 +1,24 @@
 import { syncPage } from '../pages/syncPage';
 import { firebaseNotification } from '../utils/firebaseNotification';
-import { pages } from '../pages/pages';
 import { shortcutListener } from '../utils/player';
 import { floatClick } from '../floatbutton/extension';
+import { pageInterface } from '../pages/pageInterface';
 
 let lastFocus;
 
+declare let _Page: pageInterface;
+
+// @ts-ignore
+if (typeof global.doubleLoad !== 'undefined' && global.doubleLoad) {
+  con.error('Double Execution');
+  throw 'Double Execution';
+}
+// @ts-ignore
+global.doubleLoad = true;
+
 function main() {
   if (api.settings.get('userscriptModeButton')) throw 'Userscript mode';
-  const page = new syncPage(window.location.href, pages, floatClick);
+  const page = new syncPage(window.location.href, _Page, floatClick);
   messagePageListener(page);
   page.init();
   firebaseNotification();

@@ -2,8 +2,9 @@ import { pageInterface, pageState } from './pageInterface';
 import { getSingle } from '../_provider/singleFactory';
 import { initFloatButton } from '../floatbutton/init';
 import { providerTemplates } from '../provider/templates';
-import { getPlayerTime } from '../utils/player';
+import { fullscreenNotification, getPlayerTime } from '../utils/player';
 import { searchClass } from '../_provider/Search/vueSearchClass';
+import { emitter } from '../utils/emitter';
 
 declare let browser: any;
 
@@ -34,6 +35,9 @@ export class syncPage {
     if (this.page === null) {
       throw new Error('Page could not be recognized');
     }
+    this.domainSet();
+    logger.log('Page', this.page.name);
+    emitter.on('syncPage_fillUi', () => this.fillUI());
   }
 
   init() {
@@ -63,6 +67,7 @@ export class syncPage {
   }
 
   private getPage(url) {
+    if (this.pages.type) return this.pages;
     for (const key in this.pages) {
       const page = this.pages[key];
       if (j.$.isArray(page.domain)) {
@@ -96,6 +101,10 @@ export class syncPage {
       }
     }
     return null;
+  }
+
+  private domainSet() {
+    this.page.domain = new URL(window.location.href).origin;
   }
 
   public openNextEp() {
@@ -265,6 +274,7 @@ export class syncPage {
       this.searchObj = new searchClass(state.title, this.novel ? 'novel' : this.page.type, state.identifier);
       this.searchObj.setPage(this.page);
       this.searchObj.setSyncPage(this);
+      this.searchObj.setLocalUrl(this.generateLocalUrl(this.page, state));
       this.curState = state;
       await this.searchObj.search();
 
@@ -314,6 +324,7 @@ export class syncPage {
       this.searchObj = new searchClass(state.title, this.novel ? 'novel' : this.page.type, state.identifier);
       this.searchObj.setPage(this.page);
       this.searchObj.setSyncPage(this);
+      this.searchObj.setLocalUrl(this.generateLocalUrl(this.page, state));
       this.curState = state;
       await this.searchObj.search();
 
@@ -324,9 +335,7 @@ export class syncPage {
 
     let malUrl = this.searchObj.getUrl();
 
-    const localUrl = `local://${this.page.name}/${this.page.type}/${state.identifier}/${encodeURIComponent(
-      state.title,
-    )}`;
+    const localUrl = this.generateLocalUrl(this.page, state);
 
     if ((malUrl === null || !malUrl) && api.settings.get('localSync')) {
       logger.log('Local Fallback');
@@ -365,7 +374,7 @@ export class syncPage {
       }
 
       // Discord Presence
-      if (api.type === 'webextension') {
+      if (api.type === 'webextension' && api.settings.get('rpc')) {
         try {
           chrome.runtime.sendMessage(extensionId, { mode: 'active' }, function(response) {
             logger.log('Presence registred', response);
@@ -468,6 +477,10 @@ export class syncPage {
     }
   }
 
+  public generateLocalUrl(page, state) {
+    return `local://${page.name}/${page.type}/${state.identifier}/${encodeURIComponent(state.title)}`;
+  }
+
   // eslint-disable-next-line consistent-return
   public openCorrectionUi() {
     if (this.searchObj) {
@@ -555,6 +568,8 @@ export class syncPage {
                 });
             } */
 
+          this.fullNotification(message);
+
           message += `
             <br>
             <button class="undoButton" style="background-color: transparent; border: none; color: rgb(255,64,129);margin-top: 10px;cursor: pointer;">
@@ -589,6 +604,20 @@ export class syncPage {
         this.singleObj.flashmError(e);
         throw e;
       });
+  }
+
+  fullNotification(text) {
+    try {
+      fullscreenNotification(text);
+      if (api.type === 'webextension') {
+        chrome.runtime.sendMessage({
+          name: 'content',
+          item: { action: 'fullscreenNotification', text },
+        });
+      }
+    } catch (e) {
+      logger.error(e);
+    }
   }
 
   fillUI() {
@@ -705,11 +734,10 @@ export class syncPage {
         );
         if (typeof this.page.overview.list.handleListHook !== 'undefined')
           this.page.overview.list.handleListHook(this.singleObj.getEpisode(), epList);
-        const curEp = epList[parseInt(this.singleObj.getEpisode())];
+        const curEp = epList[parseInt(this.singleObj.getEpisode() || 1)];
         if (
           typeof curEp === 'undefined' &&
           !curEp &&
-          this.singleObj.getEpisode() &&
           searchCurrent &&
           reTry < 10 &&
           typeof this.page.overview.list.paginationNext !== 'undefined'

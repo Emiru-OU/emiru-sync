@@ -84,6 +84,7 @@ export default {
   data() {
     return {
       items: [],
+      rand: 0,
       loading: true,
       errorText: null,
       cache: false,
@@ -134,16 +135,20 @@ export default {
     this.destroyTimer = setTimeout(() => {
       this.items = [];
       this.reload = true;
-    }, 30 * 1000);
+    }, 10 * 60 * 1000);
   },
   methods: {
     lang: api.storage.lang,
     async load() {
+      const randNr = Math.floor(Math.random() * 100000) + 1;
+      this.rand = randNr;
       this.loading = true;
       this.cache = true;
       this.errorText = null;
       cb = undefined;
       const listProvider = await getList(this.state, this.listType);
+
+      this.$emit('rewatch', listProvider.seperateRewatching);
 
       const listError = e => {
         con.error(e);
@@ -154,6 +159,10 @@ export default {
       listProvider.modes.cached = true;
 
       listProvider.getCached().then(list => {
+        if (randNr !== this.rand) {
+          con.log('Id different. Drop list items');
+          return;
+        }
         this.items = list;
       });
 
@@ -162,10 +171,15 @@ export default {
         listProvider.callbacks = {
           // eslint-disable-next-line consistent-return
           continueCall: list => {
+            if (randNr !== this.rand) {
+              con.log('Id different. Drop list items');
+              return;
+            }
             this.loading = false;
             this.cache = false;
             this.items = list;
             if (!listProvider.isDone()) {
+              // eslint-disable-next-line consistent-return
               return new Promise(resolve => {
                 cb = () => {
                   resolve();
@@ -180,6 +194,10 @@ export default {
         listProvider
           .get()
           .then(list => {
+            if (randNr !== this.rand) {
+              con.log('Id different. Drop list items');
+              return;
+            }
             this.loading = false;
             this.cache = false;
             this.items = list;

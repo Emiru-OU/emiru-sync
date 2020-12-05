@@ -1,6 +1,6 @@
 export interface xhrI {
   name: 'xhr';
-  method: 'GET' | 'POST' | 'PUT';
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
   url: string | { url: string; data?: any; headers?: any };
 }
 export interface xhrResponseI {
@@ -41,6 +41,11 @@ export interface minimalWindow {
   left: number;
 }
 
-export type sendMessageI = xhrI | iframeDone | videoTime | videoTimeSet | minimalWindow | content;
+export interface emitter {
+  name: 'emitter';
+  item: any;
+}
+
+export type sendMessageI = xhrI | iframeDone | videoTime | videoTimeSet | minimalWindow | content | emitter;
 
 export type responseMessageI = xhrResponseI;

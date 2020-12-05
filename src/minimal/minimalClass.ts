@@ -4,7 +4,7 @@ import * as VueClazyLoad from 'vue-clazy-load';
 import minimalApp from './minimalApp.vue';
 
 Vue.use(VueClazyLoad);
-Vue.use(VueDOMPurifyHTML);
+Vue.use(VueDOMPurifyHTML, { default: { ADD_ATTR: ['target'] } });
 
 export class minimal {
   private history: string[] = [];
@@ -299,6 +299,10 @@ export class minimal {
 
     this.minimal.find('#allSitesUi').click(() => {
       this.minimalVue.$children[0].selectTab('allSites');
+    });
+
+    this.minimal.find('#customDomainsUi').click(() => {
+      this.minimalVue.$children[0].selectTab('customDomains');
     });
 
     try {

@@ -90,6 +90,15 @@
           <button id="allSitesUi" type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
             Websites
           </button>
+          <button
+            v-if="isExtension()"
+            id="customDomainsUi"
+            type="button"
+            class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
+            style="margin-left: 15px;"
+          >
+            Custom domains
+          </button>
         </li>
 
         <shortcut option="correctionShort">{{ lang('settings_Shortcuts_Correction') }}</shortcut>
@@ -130,16 +139,16 @@
         <checkbox option="SiteSearch">{{ lang('Search') }}</checkbox>
         <checkbox option="9anime">9anime</checkbox>
         <checkbox option="Crunchyroll">Crunchyroll</checkbox>
-        <checkbox option="Netflix">Netflix</checkbox>
         <checkbox option="Gogoanime">Gogoanime</checkbox>
         <checkbox option="Twistmoe">twist.moe</checkbox>
         <checkbox option="Anime4you">Anime4You (Ger)</checkbox>
         <checkbox option="Aniwatch">Aniwatch</checkbox>
         <checkbox option="AnimeSimple">AnimeSimple</checkbox>
+        <checkbox option="animepahe">animepahe</checkbox>
         <checkbox option="Mangadex">MangaDex</checkbox>
+        <checkbox option="MangaFox">MangaFox</checkbox>
         <checkbox option="MangaNelo">MangaNelo</checkbox>
-        <checkbox option="Proxeranime">Proxer (Anime)</checkbox>
-        <checkbox option="Proxermanga">Proxer (Manga)</checkbox>
+        <checkbox option="MangaSee">MangaSee</checkbox>
       </div>
 
       <div class="mdl-cell bg-cell mdl-cell--6-col mdl-cell--8-col-tablet mdl-shadow--4dp">
@@ -207,7 +216,9 @@
         <checkbox option="minimizeBigPopup">{{ lang('settings_miniMAL_minimizeBigPopup') }}</checkbox>
         <checkbox option="floatButtonCorrection">{{ lang('settings_miniMAL_floatButtonCorrection') }}</checkbox>
         <checkbox option="floatButtonHide">{{ lang('settings_miniMAL_floatButtonHide') }}</checkbox>
-        <checkbox option="autoCloseMinimal">{{ lang('settings_miniMAL_autoCloseMinimal') }}</checkbox>
+        <checkbox v-if="!isExtension()" option="autoCloseMinimal">{{
+          lang('settings_miniMAL_autoCloseMinimal')
+        }}</checkbox>
 
         <li v-if="commands" class="mdl-list__item">
           <span class="mdl-list__item-primary-content">
@@ -315,6 +326,7 @@
         >
           <option v-for="drop in progressMangaDropdown" :key="drop.key" :value="drop.key">{{ drop.label }}</option>
         </dropdown>
+        <checkbox option="loadPTWForProgress">{{ lang('settings_loadPTWForProgress') }}</checkbox>
       </div>
 
       <div
@@ -377,6 +389,7 @@
             More Info</a
           >
         </div>
+        <checkbox option="rpc">{{ lang('settings_enabled') }}</checkbox>
         <checkbox option="presenceHidePage">{{ lang('settings_presenceHidePage') }}</checkbox>
       </div>
 
@@ -641,9 +654,17 @@ export default {
         if (!firstData.hasOwnProperty('status')) throw 'No status';
         if (!firstData.hasOwnProperty('tags')) throw 'No tags';
 
-        importData(iData).then(() => {
-          utils.flashm('File imported');
-        });
+        importData(iData)
+          .then(() => {
+            utils.flashm('File imported');
+            alert('File imported');
+          })
+          .catch(e => {
+            if (e.message) {
+              alert(e.message);
+            }
+            throw e;
+          });
       } catch (e) {
         alert('File has wrong formating');
         con.error('File has wrong formating:', e);
@@ -676,7 +697,7 @@ export default {
     startProgressSync() {
       if (this.isExtension()) {
         const inter = parseInt(api.settings.get('progressInterval'));
-        if(!inter) return;
+        if (!inter) return;
         con.log('Trigger Progress update');
         chrome.alarms.create('progressSync', {
           periodInMinutes: inter,

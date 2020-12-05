@@ -5,12 +5,13 @@
 import { compareTwoStrings } from 'string-similarity';
 
 import { search as pageSearch } from '../searchFactory';
+import { Single as localSingle } from '../Local/single';
 
 interface searchResult {
   id?: number;
   url: string;
   offset: number;
-  provider: 'firebase' | 'mal' | 'page' | 'user' | 'sync';
+  provider: 'firebase' | 'mal' | 'page' | 'user' | 'sync' | 'local';
   cache?: boolean;
   similarity: {
     same: boolean;
@@ -24,6 +25,8 @@ export class searchClass {
   private page;
 
   private syncPage;
+
+  private localUrl = '';
 
   protected state: searchResult | false = false;
 
@@ -39,6 +42,10 @@ export class searchClass {
 
   setPage(page) {
     this.page = page;
+  }
+
+  setLocalUrl(url: string) {
+    this.localUrl = url;
   }
 
   setSyncPage(syncPage) {
@@ -134,10 +141,14 @@ export class searchClass {
     this.state = await this.getCache();
 
     if (!this.state) {
+      this.state = await this.searchLocal();
+    }
+
+    if (!this.state) {
       this.state = await this.searchForIt();
     }
 
-    if (!this.state || (this.state && !['user', 'firebase', 'sync'].includes(this.state.provider))) {
+    if (!this.state || (this.state && !['user', 'firebase', 'sync', 'local'].includes(this.state.provider))) {
       const tempRes = await this.onsiteSearch();
       if (tempRes) this.state = tempRes;
     }
@@ -182,6 +193,23 @@ export class searchClass {
     return {
       same: found,
       value: simi,
+    };
+  }
+
+  public async searchLocal(): Promise<searchResult | false> {
+    if (!this.localUrl) return false;
+    const local = new localSingle(this.localUrl);
+    await local.update();
+    if (!local.isOnList()) return false;
+    this.logger.m('Local').log('On List');
+    return {
+      url: '',
+      offset: 0,
+      provider: 'local',
+      similarity: {
+        same: true,
+        value: 1,
+      },
     };
   }
 
@@ -409,16 +437,14 @@ export class searchClass {
       if (this.state.cache) return;
       if (this.state.provider === 'user' && !this.changed) return;
       if (this.state.provider === 'firebase') return;
+      if (this.state.provider === 'local') return;
 
       let kissurl;
       if (!kissurl) {
         if (this.page.isSyncPage(this.syncPage.url)) {
           kissurl = this.page.sync.getOverviewUrl(this.syncPage.url);
           if (this.page.database === 'Crunchyroll') {
-            kissurl = `${this.syncPage.url}?..${encodeURIComponent(this.identifier.toLowerCase().split('#')[0]).replace(
-              /\./g,
-              '%2E',
-            )}`;
+            kissurl = `${this.syncPage.url}`;
           }
         } else {
           if (this.page.database === 'Crunchyroll') {
@@ -429,25 +455,38 @@ export class searchClass {
         }
       }
       const param: {
-        Kiss: string;
-        Mal: string;
-        newCorrection?: boolean;
-        similarity?: any;
-      } = { Kiss: kissurl, Mal: this.state.url };
+        pageUrl: string;
+        malUrl: string;
+        correction: boolean;
+        page: string;
+      } = {
+        pageUrl: kissurl,
+        malUrl: this.state.url,
+        correction: false,
+        page: this.page.database,
+      };
       if (this.state.provider === 'user') {
         /* eslint-disable-next-line */
         if (!confirm(api.storage.lang('correction_DBRequest'))) return;
-        param.newCorrection = true;
+        param.correction = true;
       }
-      param.similarity = this.state.similarity;
-      const url = `https://kissanimelist.firebaseio.com/Data2/Request/${this.page.database}Request.json`;
-      api.request.xhr('POST', { url, data: JSON.stringify(param) }).then(response => {
-        if (response.responseText !== 'null' && !(response.responseText.indexOf('error') > -1)) {
-          logger.log('Send to database:', param);
-        } else {
-          logger.error('Send to database:', response.responseText);
-        }
-      });
+
+      const url = 'https://api.malsync.moe/corrections';
+      api.request
+        .xhr('POST', {
+          url,
+          data: JSON.stringify(param),
+          headers: { 'Content-Type': 'application/json' },
+        })
+        .then(response => {
+          try {
+            const res = JSON.parse(response.responseText);
+            if (res.error) throw res;
+            logger.log('Send to database:', res);
+          } catch (e) {
+            logger.error('Send to database:', e);
+          }
+        });
     }
   }
 

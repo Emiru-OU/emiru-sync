@@ -10,7 +10,7 @@ import { Emby } from './Emby/main';
 import { Plex } from './Plex/main';
 import { Netflix } from './Netflix/main';
 import { animepahe } from './animepahe/main';
-import { animeflv } from './Animeflv/main';
+import { Animeflv } from './Animeflv/main';
 import { Jkanime } from './Jkanime/main';
 import { Vrv } from './Vrv/main';
 import { Proxer } from './Proxer/main';
@@ -19,6 +19,7 @@ import { animeultima } from './animeultima/main';
 import { Aniflix } from './Aniflix/main';
 import { AnimeDaisuki } from './AnimeDaisuki/main';
 import { Animefreak } from './Animefreak/main';
+import { AnimeLab } from './AnimeLab/main';
 import { KickAssAnime } from './KickAssAnime/main';
 import { AnimeKisa } from './AnimeKisa/main';
 import { Wakanim } from './Wakanim/main';
@@ -99,6 +100,20 @@ import { Readm } from './Readm/main';
 import { tioanime } from './tioanime/main';
 import { YugenAnime } from './YugenAnime/main';
 import { MangaSee } from './MangaSee/main';
+import { AnimeTribes } from './AnimeTribes/main';
+import { Okanime } from './Okanime/main';
+import { BSTO } from './BSTO/main';
+import { Pantsubase } from './Pantsubase/main';
+import { Fastani } from './Fastani/main';
+import { AnimeOwl } from './AnimeOwl/main';
+import { AsuraScans } from './AsuraScans/main';
+import { NaniScans } from './NaniScans/main';
+import { MerakiScans } from './MerakiScans/main';
+import { Jellyfin } from './Jellyfin/main';
+import { An1me } from './An1me/main';
+import { MangaJar } from './MangaJar/main';
+import { AnimeDao } from './AnimeDao/main';
+import { Otakustv } from './Otakustv/main';
 
 export const pages = {
   nineAnime,
@@ -112,7 +127,7 @@ export const pages = {
   Turkanime,
   animepahe,
   Netflix,
-  animeflv,
+  Animeflv,
   Jkanime,
   Proxer,
   Wakanim,
@@ -122,6 +137,7 @@ export const pages = {
   animeultima,
   Aniflix,
   Animefreak,
+  AnimeLab,
   AnimeDaisuki,
   KickAssAnime,
   AnimeKisa,
@@ -202,4 +218,18 @@ export const pages = {
   tioanime,
   YugenAnime,
   MangaSee,
+  AnimeTribes,
+  Okanime,
+  BSTO,
+  Pantsubase,
+  Fastani,
+  AnimeOwl,
+  AsuraScans,
+  NaniScans,
+  MerakiScans,
+  Jellyfin,
+  An1me,
+  MangaJar,
+  AnimeDao,
+  Otakustv,
 };
